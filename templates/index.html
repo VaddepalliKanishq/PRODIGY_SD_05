@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Scraper ETL Dashboard</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="background-decor bg-glow-1"></div>
+    <div class="background-decor bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-logo">
+                <i data-lucide="database" class="logo-icon"></i>
+                <div>
+                    <h1>E-Commerce ETL pipeline</h1>
+                    <p class="subtitle">Scraper Sandbox Agent Dashboard</p>
+                </div>
+            </div>
+            <div class="status-badge" id="status-badge">
+                <span class="status-dot idle" id="status-dot"></span>
+                <span class="status-text" id="status-text">Idle</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Layout Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Config Panel -->
+            <section class="dashboard-card card-config glass3d">
+                <div class="card-header">
+                    <i data-lucide="sliders" class="card-icon"></i>
+                    <h2>Pipeline Configuration</h2>
+                </div>
+                <div class="card-body">
+                    <form id="config-form">
+                        <div class="form-group">
+                            <label for="target_url">Target URL Format</label>
+                            <input type="text" id="target_url" name="target_url" value="https://books.toscrape.com/catalogue/page-{}.html" placeholder="https://domain.com/page-{}.html">
+                            <small class="input-tip">Must include <code>{}</code> placeholder for page numbers.</small>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="max_pages">Pages to Scrape</label>
+                                <div class="slider-container">
+                                    <input type="range" id="max_pages" name="max_pages" min="1" max="25" value="5">
+                                    <span id="max_pages_val" class="slider-val">5 Pages</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="run_validation" name="run_validation" checked>
+                                <span class="checkmark"></span>
+                                <span class="checkbox-label">Run Data Integrity Validation</span>
+                            </label>
+                            <small class="checkbox-tip">Drops records with empty names or negative/zero prices.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full-width" id="btn-scrape">
+                            <span class="btn-text">Execute Scraper Pipeline</span>
+                            <i data-lucide="play" class="btn-icon"></i>
+                            <div class="spinner hidden" id="scrape-spinner"></div>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Terminal Console Panel -->
+            <section class="dashboard-card card-terminal glass3d">
+                <div class="card-header">
+                    <i data-lucide="terminal" class="card-icon"></i>
+                    <h2>Live ETL Console Logs</h2>
+                    <button class="btn btn-clear-terminal" id="btn-clear-logs" title="Clear Console">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+                <div class="card-body terminal-body">
+                    <div class="terminal-screen" id="terminal-screen">
+                        <div class="terminal-line system-line">> Console initialized. Ready to execute ETL scraping job.</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container hidden" id="progress-container">
+                    <div class="progress-info">
+                        <span id="progress-label">Scraping Pages...</span>
+                        <span id="progress-pct">0%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Metrics Row -->
+        <section class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-icon-box bg-purple-glow">
+                    <i data-lucide="shopping-bag" class="metric-icon text-purple"></i>
+                </div>
+                <div class="metric-data">
+                    <h3 id="stat-total">0</h3>
+                    <p class="metric-label">Products Scraped</p>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon-box bg-blue-glow">
+                    <i data-lucide="pound-sign" class="metric-icon text-blue"></i>
+                </div>
+                <div class="metric-data">
+                    <h3 id="stat-price">£0.00</h3>
+                    <p class="metric-label">Average Price</p>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon-box bg-green-glow">
+                    <i data-lucide="check-circle-2" class="metric-icon text-green"></i>
+                </div>
+                <div class="metric-data">
+                    <h3 id="stat-stock">0%</h3>
+                    <p class="metric-label">In-Stock Ratio</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts row -->
+        <section class="charts-grid">
+            <div class="dashboard-card chart-card glass3d">
+                <div class="card-header">
+                    <i data-lucide="bar-chart-3" class="card-icon text-purple"></i>
+                    <h2>Price Distribution Histogram</h2>
+                </div>
+                <div class="card-body chart-body">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+            <div class="dashboard-card chart-card glass3d">
+                <div class="card-header">
+                    <i data-lucide="pie-chart" class="card-icon text-blue"></i>
+                    <h2>Average Rating Count</h2>
+                </div>
+                <div class="card-body chart-body">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data table Section -->
+        <section class="dashboard-card table-section glass3d">
+            <div class="table-header-row">
+                <div class="card-header">
+                    <i data-lucide="list-filter" class="card-icon"></i>
+                    <h2>Extracted Products Data View</h2>
+                </div>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="table-search" placeholder="Search product name...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="products-table" id="products-table">
+                    <thead>
+                        <tr>
+                            <th width="80px">Cover</th>
+                            <th>Product Name</th>
+                            <th width="120px" class="sortable text-right" id="sort-price">Price <i data-lucide="chevrons-up-down" class="sort-icon"></i></th>
+                            <th width="140px" class="sortable text-center" id="sort-rating">Rating <i data-lucide="chevrons-up-down" class="sort-icon"></i></th>
+                            <th width="140px" class="text-center">Availability</th>
+                            <th width="100px" class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-tbody">
+                        <tr>
+                            <td colspan="6" class="table-empty-state">
+                                <i data-lucide="folder-open" class="empty-icon"></i>
+                                <p>No data scraped yet. Configure parameters above and hit Execute.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="table-pagination-row hidden" id="pagination-container">
+                <div class="pagination-info">
+                    Showing <span id="pag-start">0</span> to <span id="pag-end">0</span> of <span id="pag-total">0</span> entries
+                </div>
+                <div class="pagination-buttons">
+                    <button class="btn btn-pag" id="btn-pag-prev"><i data-lucide="chevron-left"></i></button>
+                    <div class="pagination-pages" id="pag-pages-list"></div>
+                    <button class="btn btn-pag" id="btn-pag-next"><i data-lucide="chevron-right"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Outputs / Reports Panel -->
+        <section class="outputs-grid">
+            <!-- Report Card -->
+            <div class="dashboard-card card-report glass3d">
+                <div class="card-header">
+                    <i data-lucide="file-text" class="card-icon"></i>
+                    <h2>Scraping Summary Report</h2>
+                </div>
+                <div class="card-body report-body">
+                    <pre class="report-box" id="report-content">No report available. Complete a scraping execution cycle first.</pre>
+                </div>
+            </div>
+
+            <!-- Export Card -->
+            <div class="dashboard-card card-export glass3d">
+                <div class="card-header">
+                    <i data-lucide="download-cloud" class="card-icon"></i>
+                    <h2>Load & Export Data Center</h2>
+                </div>
+                <div class="card-body export-body">
+                    <p class="export-desc">Download clean, validated datasets in CSV and JSON formats for analytics and integration purposes.</p>
+                    
+                    <div class="download-cards">
+                        <div class="download-card" id="download-csv-card">
+                            <div class="dl-icon-container bg-csv-glow">
+                                <i data-lucide="file-spreadsheet" class="dl-icon text-csv"></i>
+                            </div>
+                            <div class="dl-details">
+                                <h3>Download CSV</h3>
+                                <p>Comma Separated Values</p>
+                            </div>
+                            <a href="/api/download/csv" class="btn-download" id="dl-csv-btn">
+                                <i data-lucide="download"></i>
+                            </a>
+                        </div>
+
+                        <div class="download-card" id="download-json-card">
+                            <div class="dl-icon-container bg-json-glow">
+                                <i data-lucide="file-code-2" class="dl-icon text-json"></i>
+                            </div>
+                            <div class="dl-details">
+                                <h3>Download JSON</h3>
+                                <p>JavaScript Object Notation</p>
+                            </div>
+                            <a href="/api/download/json" class="btn-download" id="dl-json-btn">
+                                <i data-lucide="download"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <p>E-Commerce Data Extractor pipeline &copy; 2026. Made with Google DeepMind Antigravity.</p>
+        </footer>
+    </div>
+
+    <!-- Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
