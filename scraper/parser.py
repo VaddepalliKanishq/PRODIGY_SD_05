@@ -15,7 +15,7 @@ def parse_products(html, base_url="https://books.toscrape.com/catalogue/"):
             
             # Price
             price_el = product.find('p', class_='price_color')
-            price_raw = price_el.text if price_el else "£0.00"
+            price_raw = price_el.text if price_el else "₹0.00"
             
             # Availability
             availability_el = product.find('p', class_='instock availability')

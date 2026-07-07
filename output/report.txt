@@ -1,9 +1,9 @@
 =========================================
         📊 E-COMMERCE SCRAPING REPORT     
 =========================================
-Total Products Extracted : 180
-Average Product Price    : £34.83
-Items in Stock           : 180 (100.0%)
+Total Products Extracted : 100
+Average Product Price    : ₹34.56
+Items in Stock           : 100 (100.0%)
 Data Export CSV Path     : data\processed\products_clean.csv
 Data Export JSON Path    : data\processed\products_clean.json
 =========================================

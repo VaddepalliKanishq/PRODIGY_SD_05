@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayStats(summary) {
         if (!summary) return;
         statTotal.textContent = summary.total_extracted || 0;
-        statPrice.textContent = `£${(summary.average_price || 0).toFixed(2)}`;
+        statPrice.textContent = `₹${(summary.average_price || 0).toFixed(2)}`;
         statStock.textContent = `${(summary.in_stock_percentage || 0).toFixed(1)}%`;
     }
 
@@ -207,11 +207,92 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/report')
             .then(res => res.json())
             .then(data => {
-                reportContent.textContent = data.report || "No report generated.";
+                if (!data.report || data.report.includes("No report available")) {
+                    reportContent.innerHTML = `
+                        <div class="report-empty">
+                            <i data-lucide="alert-circle" class="empty-icon"></i>
+                            <p>No summary report generated yet.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+                
+                // Parse the report text
+                const lines = data.report.split('\n');
+                let totalProducts = '';
+                let avgPrice = '';
+                let itemsStock = '';
+                let csvPath = '';
+                let jsonPath = '';
+                
+                lines.forEach(line => {
+                    if (line.includes('Total Products Extracted')) {
+                        totalProducts = line.split(':')[1].trim();
+                    } else if (line.includes('Average Product Price')) {
+                        avgPrice = line.split(':')[1].trim();
+                    } else if (line.includes('Items in Stock')) {
+                        itemsStock = line.split(':')[1].trim();
+                    } else if (line.includes('Data Export CSV Path')) {
+                        csvPath = line.split(':')[1].trim();
+                    } else if (line.includes('Data Export JSON Path')) {
+                        jsonPath = line.split(':')[1].trim();
+                    }
+                });
+
+                if (totalProducts) {
+                    reportContent.innerHTML = `
+                        <div class="premium-report-container">
+                            <div class="report-metric-row">
+                                <div class="report-metric-card">
+                                    <div class="metric-icon"><i data-lucide="package" style="color: #a78bfa;"></i></div>
+                                    <div class="metric-details">
+                                        <span class="metric-label">Total Extracted</span>
+                                        <span class="metric-val text-violet">${totalProducts}</span>
+                                    </div>
+                                </div>
+                                <div class="report-metric-card">
+                                    <div class="metric-icon"><i data-lucide="indian-rupee" style="color: #34d399;"></i></div>
+                                    <div class="metric-details">
+                                        <span class="metric-label">Average Price</span>
+                                        <span class="metric-val text-emerald">${avgPrice}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="report-metric-card full-width">
+                                <div class="metric-icon"><i data-lucide="check-circle" style="color: #22d3ee;"></i></div>
+                                <div class="metric-details" style="width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <span class="metric-label">Items in Stock</span>
+                                        <span class="metric-val text-cyan">${itemsStock}</span>
+                                    </div>
+                                    <div class="progress-bar-mini">
+                                        <div class="progress-fill-mini" style="width: ${extractPercentage(itemsStock)}%"></div>
+                                    </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Fallback to text representation
+                    reportContent.innerHTML = `<pre class="report-box">${data.report}</pre>`;
+                }
+                lucide.createIcons();
             })
             .catch(() => {
-                reportContent.textContent = "Error loading report file.";
+                reportContent.innerHTML = `
+                    <div class="report-error">
+                        <i data-lucide="x-circle" class="error-icon"></i>
+                        <p>Error loading report file.</p>
+                    </div>
+                `;
+                lucide.createIcons();
             });
+    }
+
+    function extractPercentage(stockStr) {
+        const match = stockStr.match(/\(([\d\.]+)%\)/);
+        return match ? parseFloat(match[1]) : 0;
     }
 
     function renderTable() {
@@ -263,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td>${coverImg}</td>
                 <td style="font-weight: 500;">${escapeHtml(item.name)}</td>
-                <td class="text-right price-tag">£${parseFloat(item.price).toFixed(2)}</td>
+                <td class="text-right price-tag">₹${parseFloat(item.price).toFixed(2)}</td>
                 <td class="text-center rating-stars" title="${ratingVal} out of 5 stars">${starsText}</td>
                 <td class="text-center">${stockBadge}</td>
                 <td class="text-center">${viewLink}</td>
@@ -398,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         priceChart = new Chart(priceCtx, {
             type: 'bar',
             data: {
-                labels: priceRanges.map(range => `£${range}`),
+                labels: priceRanges.map(range => `₹${range}`),
                 datasets: [{
                     label: 'Product Count',
                     data: priceCounts,

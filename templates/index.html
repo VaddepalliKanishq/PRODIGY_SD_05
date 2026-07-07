@@ -25,8 +25,8 @@
             <div class="header-logo">
                 <i data-lucide="database" class="logo-icon"></i>
                 <div>
-                    <h1>E-Commerce ETL pipeline</h1>
-                    <p class="subtitle">Scraper Sandbox Agent Dashboard</p>
+                    <h1>E-Commerce Web Scraper</h1>
+                    <p class="subtitle">Extract, clean, and validate book listings</p>
                 </div>
             </div>
             <div class="status-badge" id="status-badge">
@@ -41,14 +41,14 @@
             <section class="dashboard-card card-config glass3d">
                 <div class="card-header">
                     <i data-lucide="sliders" class="card-icon"></i>
-                    <h2>Pipeline Configuration</h2>
+                    <h2>Configuration</h2>
                 </div>
                 <div class="card-body">
                     <form id="config-form">
                         <div class="form-group">
-                            <label for="target_url">Target URL Format</label>
+                            <label for="target_url">Target URL</label>
                             <input type="text" id="target_url" name="target_url" value="https://books.toscrape.com/catalogue/page-{}.html" placeholder="https://domain.com/page-{}.html">
-                            <small class="input-tip">Must include <code>{}</code> placeholder for page numbers.</small>
+                            <small class="input-tip">Must include <code>{}</code> placeholder to paginate page numbers.</small>
                         </div>
                         <div class="form-row">
                             <div class="form-group flex-1">
@@ -63,12 +63,12 @@
                             <label class="checkbox-container">
                                 <input type="checkbox" id="run_validation" name="run_validation" checked>
                                 <span class="checkmark"></span>
-                                <span class="checkbox-label">Run Data Integrity Validation</span>
+                                <span class="checkbox-label">Clean & validate scraped data</span>
                             </label>
-                            <small class="checkbox-tip">Drops records with empty names or negative/zero prices.</small>
+                            <small class="checkbox-tip">Removes items missing titles or containing invalid prices.</small>
                         </div>
                         <button type="submit" class="btn btn-primary btn-full-width" id="btn-scrape">
-                            <span class="btn-text">Execute Scraper Pipeline</span>
+                            <span class="btn-text">Start Scraper</span>
                             <i data-lucide="play" class="btn-icon"></i>
                             <div class="spinner hidden" id="scrape-spinner"></div>
                         </button>
@@ -80,7 +80,7 @@
             <section class="dashboard-card card-terminal glass3d">
                 <div class="card-header">
                     <i data-lucide="terminal" class="card-icon"></i>
-                    <h2>Live ETL Console Logs</h2>
+                    <h2>Console Output</h2>
                     <button class="btn btn-clear-terminal" id="btn-clear-logs" title="Clear Console">
                         <i data-lucide="trash-2"></i>
                     </button>
@@ -115,10 +115,10 @@
             </div>
             <div class="metric-card">
                 <div class="metric-icon-box bg-blue-glow">
-                    <i data-lucide="pound-sign" class="metric-icon text-blue"></i>
+                    <i data-lucide="indian-rupee" class="metric-icon text-blue"></i>
                 </div>
                 <div class="metric-data">
-                    <h3 id="stat-price">£0.00</h3>
+                    <h3 id="stat-price">₹0.00</h3>
                     <p class="metric-label">Average Price</p>
                 </div>
             </div>
@@ -138,7 +138,7 @@
             <div class="dashboard-card chart-card glass3d">
                 <div class="card-header">
                     <i data-lucide="bar-chart-3" class="card-icon text-purple"></i>
-                    <h2>Price Distribution Histogram</h2>
+                    <h2>Price Distribution</h2>
                 </div>
                 <div class="card-body chart-body">
                     <canvas id="priceChart"></canvas>
@@ -147,7 +147,7 @@
             <div class="dashboard-card chart-card glass3d">
                 <div class="card-header">
                     <i data-lucide="pie-chart" class="card-icon text-blue"></i>
-                    <h2>Average Rating Count</h2>
+                    <h2>Rating Distribution</h2>
                 </div>
                 <div class="card-body chart-body">
                     <canvas id="ratingChart"></canvas>
@@ -160,7 +160,7 @@
             <div class="table-header-row">
                 <div class="card-header">
                     <i data-lucide="list-filter" class="card-icon"></i>
-                    <h2>Extracted Products Data View</h2>
+                    <h2>Scraped Products</h2>
                 </div>
                 <div class="table-controls">
                     <div class="search-box">
@@ -185,7 +185,7 @@
                         <tr>
                             <td colspan="6" class="table-empty-state">
                                 <i data-lucide="folder-open" class="empty-icon"></i>
-                                <p>No data scraped yet. Configure parameters above and hit Execute.</p>
+                                <p>No products scraped yet. Click "Start Scraper" above to begin.</p>
                             </td>
                         </tr>
                     </tbody>
@@ -206,14 +206,18 @@
 
         <!-- Outputs / Reports Panel -->
         <section class="outputs-grid">
-            <!-- Report Card -->
             <div class="dashboard-card card-report glass3d">
                 <div class="card-header">
                     <i data-lucide="file-text" class="card-icon"></i>
-                    <h2>Scraping Summary Report</h2>
+                    <h2>Summary Report</h2>
                 </div>
                 <div class="card-body report-body">
-                    <pre class="report-box" id="report-content">No report available. Complete a scraping execution cycle first.</pre>
+                    <div id="report-content" class="report-container-styled">
+                        <div class="report-empty">
+                            <i data-lucide="alert-circle" class="empty-icon"></i>
+                            <p>No summary report generated yet.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -221,10 +225,10 @@
             <div class="dashboard-card card-export glass3d">
                 <div class="card-header">
                     <i data-lucide="download-cloud" class="card-icon"></i>
-                    <h2>Load & Export Data Center</h2>
+                    <h2>Downloads</h2>
                 </div>
                 <div class="card-body export-body">
-                    <p class="export-desc">Download clean, validated datasets in CSV and JSON formats for analytics and integration purposes.</p>
+                    <p class="export-desc">Export the scraped dataset in CSV or JSON format.</p>
                     
                     <div class="download-cards">
                         <div class="download-card" id="download-csv-card">
@@ -259,7 +263,7 @@
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <p>E-Commerce Data Extractor pipeline &copy; 2026. Made with Google DeepMind Antigravity.</p>
+            <p>&copy; 2026 E-Commerce Web Scraper. All rights reserved.</p>
         </footer>
     </div>
 

@@ -34,7 +34,7 @@ def export_data(data, export_format="csv"):
         f"        📊 E-COMMERCE SCRAPING REPORT     \n"
         f"=========================================\n"
         f"Total Products Extracted : {total_products}\n"
-        f"Average Product Price    : £{avg_price:.2f}\n"
+        f"Average Product Price    : ₹{avg_price:.2f}\n"
         f"Items in Stock           : {in_stock_count} ({in_stock_pct:.1f}%)\n"
         f"Data Export CSV Path     : {config.CLEAN_DATA}\n"
         f"Data Export JSON Path    : {config.CLEAN_JSON}\n"
